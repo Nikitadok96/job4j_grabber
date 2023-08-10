@@ -15,15 +15,16 @@ import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
 import static org.quartz.TriggerBuilder.newTrigger;
 
 public class AlertRabbit {
-    private static Connection cn;
     public static void main(String[] args) {
         try {
             List<Long> store = new ArrayList<>();
             Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
             scheduler.start();
             JobDataMap data = new JobDataMap();
-            data.put("store", store);
             Properties config = initProperty();
+            Connection connection = initConnection(config);
+            data.put("store", store);
+            data.put("connection", connection);
             JobDetail job = newJob(Rabbit.class).usingJobData(data).build();
             SimpleScheduleBuilder times = simpleSchedule()
                     .withIntervalInSeconds(Integer.parseInt(config.getProperty("rabbit.interval")))
@@ -41,6 +42,23 @@ public class AlertRabbit {
         }
     }
 
+    private static Connection initConnection(Properties properties) throws SQLException {
+        Connection cn = DriverManager.getConnection(
+                properties.getProperty("jdbc.url"),
+                properties.getProperty("jdbc.username"),
+                properties.getProperty("jdbc.password"));
+        return cn;
+    }
+    private static Properties initProperty() {
+        Properties config = new Properties();
+        try (InputStream inputStream = new FileInputStream("src/main/resources/rabbit.properties")) {
+            config.load(inputStream);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return config;
+    }
+
     public static class Rabbit implements Job {
 
         public Rabbit() {
@@ -52,35 +70,16 @@ public class AlertRabbit {
             System.out.println("Rabbit runs here ...");
             List<Long> store = (List<Long>) context.getJobDetail().getJobDataMap().get("store");
             store.add(System.currentTimeMillis());
-            Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-            add(timestamp);
-        }
-
-        private void add(Timestamp timestamp) {
-            try (PreparedStatement preparedStatement = cn.prepareStatement(
+            Connection connection = (Connection) context.getJobDetail().getJobDataMap().get("connection");
+            try (PreparedStatement preparedStatement = connection.prepareStatement(
                     "INSERT INTO rabbit(created_date) values (?)"
             )) {
-                preparedStatement.setTimestamp(1, timestamp);
+                preparedStatement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
                 preparedStatement.execute();
             } catch (SQLException e) {
                 e.printStackTrace();
             }
         }
-    }
 
-    private static Properties initProperty() {
-        Properties config = new Properties();
-        try (InputStream inputStream = new FileInputStream("src/main/resources/rabbit.properties")) {
-            config.load(inputStream);
-            Class.forName(config.getProperty("jdbc.driver"));
-            cn = DriverManager.getConnection(
-                    config.getProperty("jdbc.url"),
-                    config.getProperty("jdbc.username"),
-                    config.getProperty("jdbc.password")
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return config;
     }
 }
