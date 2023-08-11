@@ -42,12 +42,12 @@ public class AlertRabbit {
         }
     }
 
-    private static Connection initConnection(Properties properties) throws SQLException {
-        Connection cn = DriverManager.getConnection(
+    private static Connection initConnection(Properties properties) throws SQLException, ClassNotFoundException {
+        Class.forName(properties.getProperty("jdbc.driver"));
+        return DriverManager.getConnection(
                 properties.getProperty("jdbc.url"),
                 properties.getProperty("jdbc.username"),
                 properties.getProperty("jdbc.password"));
-        return cn;
     }
     private static Properties initProperty() {
         Properties config = new Properties();
