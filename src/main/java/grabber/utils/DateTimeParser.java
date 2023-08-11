@@ -1,4 +1,4 @@
-package quartz;
+package grabber.utils;
 
 import java.time.LocalDateTime;
 
