@@ -20,25 +20,10 @@ public class HabrCareerParse implements Parse {
     private static final String SOURCE_LINK = "https://career.habr.com";
     private static final String PAGE_LINK = String.format("%s/vacancies/java_developer", SOURCE_LINK);
     private static final int PAGE_COUNT = 5;
-
     private final DateTimeParser dateTimeParser;
 
     public HabrCareerParse(DateTimeParser dateTimeParser) {
         this.dateTimeParser = dateTimeParser;
-    }
-
-    public static void main(String[] args) {
-        HabrCareerParse habrCareerParse = new HabrCareerParse(new HabrCareerDateTimeParser());
-        List<Post> list = habrCareerParse.parseToPage();
-        list.forEach(System.out::println);
-    }
-
-    private List<Post> parseToPage() {
-        ArrayList<Post> postList = new ArrayList<>();
-        for (int i = 1; i <= PAGE_COUNT; i++) {
-            postList.addAll(list(String.format(PAGE_LINK + "?page=%s", i)));
-        }
-        return postList;
     }
 
     private String retrieveDescription(String link) throws IOException {

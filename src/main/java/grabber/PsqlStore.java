@@ -29,36 +29,6 @@ public class PsqlStore implements Store {
                 cfg.getProperty("jdbc.password"));
     }
 
-    public static void main(String[] args) {
-        Properties properties = new Properties();
-        try (InputStream in = new FileInputStream("src/main/resources/rabbit.properties")) {
-            properties.load(in);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        try (PsqlStore psqlStore = new PsqlStore(properties)) {
-            Post post1 = new Post("Java-разработчик",
-                    "https://career.habr.com/vacancies/1000126192",
-                    "СберКорус — цифровая платформа для электронного документооборота.",
-                    new HabrCareerDateTimeParser().parse("2023-08-11T14:27:31+03:00"));
-            Post post2 = new Post("Java developer",
-                    "https://career.habr.com/vacancies/1000121931",
-                    "Мы ищем Java-разработчика в команду разработки",
-                    new HabrCareerDateTimeParser().parse("2023-08-11T14:27:31+03:00"));
-            Post post3 = new Post("Руководитель направления по JAVA-разработке",
-                    "https://career.habr.com/vacancies/1000126192",
-                    "СберКорус — цифровая платформа для электронного документооборота.",
-                    new HabrCareerDateTimeParser().parse("2023-08-11T14:38:04+03:00"));
-            psqlStore.save(post1);
-            psqlStore.save(post2);
-            psqlStore.save(post3);
-            List<Post> list = psqlStore.getAll();
-            Post post = psqlStore.findById(2);
-        }  catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Override
     public void save(Post post) {
         try (PreparedStatement statement = cnn.prepareStatement(
